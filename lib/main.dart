@@ -117,31 +117,8 @@ class _MyHomePageState extends State<MyHomePage> {
     final isLandscape = mediaQuery.orientation == Orientation.landscape;
 
     final PreferredSizeWidget appBar = Platform.isIOS
-        ? CupertinoNavigationBar(
-            middle: Text('Personal Expenses'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                GestureDetector(
-                  child: Icon(CupertinoIcons.add),
-                  onTap: () => _showNewTransactionInput(context),
-                )
-              ],
-            ),
-          )
-        : AppBar(
-            title: Text('Personal Expenses'),
-            actions: <Widget>[
-              IconButton(
-                icon: Icon(Icons.add),
-                onPressed: () => _showNewTransactionInput(context),
-              ),
-              IconButton(
-                icon: Icon(Icons.more_vert),
-                onPressed: () => {},
-              )
-            ],
-          );
+        ? _buildNavigationBarIOS(context)
+        : _buildAppBarAndroid(context);
 
     final trxListWidget = Container(
         height: (mediaQuery.size.height -
@@ -156,42 +133,14 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
+            // Landscape Layout
             if (isLandscape)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text('Show Chart', style: Theme.of(context).textTheme.title,),
-                  Switch.adaptive(
-                    activeColor: Theme.of(context).primaryColor,
-                    value: this._showChart,
-                    onChanged: (val) {
-                      setState(() {
-                        this._showChart = val;
-                      });
-                    },
-                  )
-                ],
-              ),
+              ..._buildLandscapeLayout(
+                  context, mediaQuery, appBar, trxListWidget),
 
+            // Portrait Layout
             if (!isLandscape)
-              Container(
-                  height: (mediaQuery.size.height -
-                          appBar.preferredSize.height -
-                          mediaQuery.padding.top) *
-                      .3,
-                  child: Chart(this._recentTransactions)),
-            if (!isLandscape)
-              trxListWidget,
-            // Chart
-            if (isLandscape)
-              this._showChart
-                  ? Container(
-                      height: (mediaQuery.size.height -
-                              appBar.preferredSize.height -
-                              mediaQuery.padding.top) *
-                          .7,
-                      child: Chart(this._recentTransactions))
-                  : trxListWidget
+              ..._buildPortraitLayout(mediaQuery, appBar, trxListWidget),
           ],
         ),
       ),
@@ -214,5 +163,81 @@ class _MyHomePageState extends State<MyHomePage> {
                     onPressed: () => _showNewTransactionInput(context),
                   ),
           );
+  }
+
+  AppBar _buildAppBarAndroid(BuildContext context) {
+    return AppBar(
+          title: Text('Personal Expenses'),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.add),
+              onPressed: () => _showNewTransactionInput(context),
+            ),
+            IconButton(
+              icon: Icon(Icons.more_vert),
+              onPressed: () => {},
+            )
+          ],
+        );
+  }
+
+  CupertinoNavigationBar _buildNavigationBarIOS(BuildContext context) {
+    return CupertinoNavigationBar(
+          middle: Text('Personal Expenses'),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              GestureDetector(
+                child: Icon(CupertinoIcons.add),
+                onTap: () => _showNewTransactionInput(context),
+              )
+            ],
+          ),
+        );
+  }
+
+  List<Widget> _buildPortraitLayout(MediaQueryData mediaQuery,
+      PreferredSizeWidget appBar, Widget trxListWidget) {
+    return [
+      Container(
+          height: (mediaQuery.size.height -
+                  appBar.preferredSize.height -
+                  mediaQuery.padding.top) *
+              .3,
+          child: Chart(this._recentTransactions)),
+      trxListWidget
+    ];
+  }
+
+  List<Widget> _buildLandscapeLayout(BuildContext context,
+      MediaQueryData mediaQuery, AppBar appBar, Widget trxListWidget) {
+    return [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            'Show Chart',
+            style: Theme.of(context).textTheme.title,
+          ),
+          Switch.adaptive(
+            activeColor: Theme.of(context).primaryColor,
+            value: this._showChart,
+            onChanged: (val) {
+              setState(() {
+                this._showChart = val;
+              });
+            },
+          )
+        ],
+      ),
+      this._showChart
+          ? Container(
+              height: (mediaQuery.size.height -
+                      appBar.preferredSize.height -
+                      mediaQuery.padding.top) *
+                  .7,
+              child: Chart(this._recentTransactions))
+          : trxListWidget
+    ];
   }
 }
