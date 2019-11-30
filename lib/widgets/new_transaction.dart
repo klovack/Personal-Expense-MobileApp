@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -52,71 +55,91 @@ class _NewTransactionState extends State<NewTransaction> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.all(15),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: <Widget>[
-            // Name (Title)
-            Container(
-              padding: EdgeInsets.symmetric(
-                vertical: 5,
-              ),
-              child: TextField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Name',
-                  hintText: 'Laptop',
+    return SingleChildScrollView(
+      child: Card(
+        margin: EdgeInsets.all(15),
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: 8.0,
+            left: 8.0,
+            right: 8.0,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 8.0,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              // Name (Title)
+              Container(
+                padding: EdgeInsets.symmetric(
+                  vertical: 5,
                 ),
-
-                // Useful, but in this case we can use other variant
-                // onChanged: (value) => inputName = value,
-              ),
-            ),
-
-            // Amount
-            Container(
-              padding: EdgeInsets.symmetric(
-                vertical: 5,
-              ),
-              child: TextField(
-                keyboardType: TextInputType.phone,
-                controller: _amountController,
-                decoration: InputDecoration(
-                  labelText: 'Amount',
-                  hintText: '€ 879.99',
-                ),
-
-                // Useful, but in this case we can use other variant
-                // onChanged: (value) => inputAmount = value
-              ),
-            ),
-
-            Row(
-              children: <Widget>[
-                Text(
-                  _selectedDate == null ? 'Choose Date!' : DateFormat.yMMMd().format(_selectedDate),
-                ),
-                FlatButton(
-                  child: Icon(
-                    Icons.calendar_today,
-                    color: Theme.of(context).primaryColor,
+                child: Platform.isIOS ? CupertinoTextField(
+                  controller: _nameController,
+                  placeholder: 'Laptop',
+                  prefix: Icon(CupertinoIcons.shopping_cart),
+                ) : TextField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Name',
+                    hintText: 'Laptop',
                   ),
-                  onPressed: () {_openDatePicker(context);},
-                )
-              ],
-            ),
 
-            RaisedButton(
-              child: Text('Add Transaction'),
-              onPressed: () {
-                _submitDate();
-              },
-              textColor: Colors.purpleAccent,
-            ),
-          ],
+                  // Useful, but in this case we can use other variant
+                  // onChanged: (value) => inputName = value,
+                ),
+              ),
+
+              // Amount
+              Container(
+                padding: EdgeInsets.symmetric(
+                  vertical: 5,
+                ),
+                child: Platform.isIOS ? CupertinoTextField(
+                  controller: _nameController,
+                  placeholder: '879.99',
+                  prefix: Text('  € ', style: TextStyle(fontSize: 18),),
+                ) : TextField(
+                  keyboardType: TextInputType.phone,
+                  controller: _amountController,
+                  decoration: InputDecoration(
+                    labelText: 'Amount',
+                    hintText: '€ 879.99',
+                  ),
+
+                  // Useful, but in this case we can use other variant
+                  // onChanged: (value) => inputAmount = value
+                ),
+              ),
+
+              Row(
+                children: <Widget>[
+                  Text(
+                    _selectedDate == null
+                        ? 'Choose Date!'
+                        : DateFormat.yMMMd().format(_selectedDate),
+                  ),
+                  FlatButton(
+                    child: Icon(
+                      Icons.calendar_today,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    onPressed: () {
+                      _openDatePicker(context);
+                    },
+                  )
+                ],
+              ),
+
+              RaisedButton(
+                child: Text('Add Transaction'),
+                onPressed: () {
+                  _submitDate();
+                },
+                textColor: Colors.white,
+                color: Theme.of(context).primaryColor,
+              ),
+            ],
+          ),
         ),
       ),
     );

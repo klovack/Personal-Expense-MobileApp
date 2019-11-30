@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import './widgets/chart.dart';
@@ -5,7 +8,15 @@ import './widgets/transaction_list.dart';
 import './widgets/new_transaction.dart';
 import './models/transaction.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  // Set the default orientation to portrait
+  // SystemChrome.setPreferredOrientations([
+  //   DeviceOrientation.portraitUp,
+  //   DeviceOrientation.portraitDown,
+  // ]);
+
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -15,26 +26,23 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Personal Expenses',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        accentColor: Colors.red,
-        fontFamily: 'MerriweatherSans',
-        textTheme: ThemeData.light().textTheme.copyWith(
-          title: TextStyle(
-            fontFamily: 'Merriweather', 
-            fontWeight: FontWeight.bold,
-            fontSize: 18
-          ),
-        ),
-        appBarTheme: AppBarTheme(
+          primarySwatch: Colors.blue,
+          accentColor: Colors.red,
+          fontFamily: 'MerriweatherSans',
           textTheme: ThemeData.light().textTheme.copyWith(
-            title: TextStyle(
-              fontFamily: 'Merriweather', 
-              fontSize: 20, 
-              fontWeight: FontWeight.bold
-            ),
-          ),
-        )
-      ),
+                title: TextStyle(
+                    fontFamily: 'Merriweather',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18),
+              ),
+          appBarTheme: AppBarTheme(
+            textTheme: ThemeData.light().textTheme.copyWith(
+                  title: TextStyle(
+                      fontFamily: 'Merriweather',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold),
+                ),
+          )),
       home: MyHomePage(),
     );
   }
@@ -46,6 +54,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  bool _showChart = false;
+
   final List<Transaction> _transactionList = [
     // Transaction(
     //     id: 'trx1', title: 'New shoes', amount: 68.99, time: DateTime.now()),
@@ -59,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<Transaction> get _recentTransactions {
     final today = DateTime.now();
-    
+
     return _transactionList.where((trx) {
       return trx.time.isAfter(today.subtract(Duration(days: 7)));
     }).toList();
@@ -84,7 +94,9 @@ class _MyHomePageState extends State<MyHomePage> {
       builder: (_) {
         return GestureDetector(
           onTap: () {},
-          child: NewTransaction(onNewTransaction: this._addNewTransaction,),
+          child: NewTransaction(
+            onNewTransaction: this._addNewTransaction,
+          ),
           behavior: HitTestBehavior.opaque,
         );
       },
@@ -101,35 +113,106 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text('Personal Expenses'),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.add),
-              onPressed: () => _showNewTransactionInput(context),
+    final mediaQuery = MediaQuery.of(context);
+    final isLandscape = mediaQuery.orientation == Orientation.landscape;
+
+    final PreferredSizeWidget appBar = Platform.isIOS
+        ? CupertinoNavigationBar(
+            middle: Text('Personal Expenses'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                GestureDetector(
+                  child: Icon(CupertinoIcons.add),
+                  onTap: () => _showNewTransactionInput(context),
+                )
+              ],
             ),
-            IconButton(
-              icon: Icon(Icons.more_vert),
-              onPressed: () => {},
-            )
-          ],
-        ),
-        body: Column(
+          )
+        : AppBar(
+            title: Text('Personal Expenses'),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(Icons.add),
+                onPressed: () => _showNewTransactionInput(context),
+              ),
+              IconButton(
+                icon: Icon(Icons.more_vert),
+                onPressed: () => {},
+              )
+            ],
+          );
+
+    final trxListWidget = Container(
+        height: (mediaQuery.size.height -
+                appBar.preferredSize.height -
+                mediaQuery.padding.top) *
+            .7,
+        child: TransactionList(this._transactionList, this._deleteTransaction));
+
+    final pageBody = SafeArea(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            // Chart
-            Chart(this._recentTransactions),
+            if (isLandscape)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text('Show Chart', style: Theme.of(context).textTheme.title,),
+                  Switch.adaptive(
+                    activeColor: Theme.of(context).primaryColor,
+                    value: this._showChart,
+                    onChanged: (val) {
+                      setState(() {
+                        this._showChart = val;
+                      });
+                    },
+                  )
+                ],
+              ),
 
-            TransactionList(this._transactionList, this._deleteTransaction),
+            if (!isLandscape)
+              Container(
+                  height: (mediaQuery.size.height -
+                          appBar.preferredSize.height -
+                          mediaQuery.padding.top) *
+                      .3,
+                  child: Chart(this._recentTransactions)),
+            if (!isLandscape)
+              trxListWidget,
+            // Chart
+            if (isLandscape)
+              this._showChart
+                  ? Container(
+                      height: (mediaQuery.size.height -
+                              appBar.preferredSize.height -
+                              mediaQuery.padding.top) *
+                          .7,
+                      child: Chart(this._recentTransactions))
+                  : trxListWidget
           ],
         ),
+      ),
+    );
 
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.add),
-          onPressed: () => _showNewTransactionInput(context),
-        ),
-      );
+    return Platform.isIOS
+        ? CupertinoPageScaffold(
+            child: pageBody,
+            navigationBar: appBar,
+          )
+        : Scaffold(
+            appBar: appBar,
+            body: pageBody,
+            floatingActionButtonLocation:
+                FloatingActionButtonLocation.centerFloat,
+            floatingActionButton: Platform.isIOS
+                ? null
+                : FloatingActionButton(
+                    child: Icon(Icons.add),
+                    onPressed: () => _showNewTransactionInput(context),
+                  ),
+          );
   }
 }

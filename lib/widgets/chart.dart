@@ -48,13 +48,7 @@ class Chart extends StatelessWidget {
       margin: EdgeInsets.all(20),
       child: Padding(
         padding: EdgeInsets.all(10),
-        child: Column(
-          children: <Widget>[
-            // Total Sum
-            Text('Total spent this week: €${totalSpending.toStringAsFixed(2)}'),
-
-            // Actual Chart
-            Row(
+        child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: groupedTransactionValues.map((data) {
                 return ChartBar(
@@ -66,8 +60,6 @@ class Chart extends StatelessWidget {
                 );
               }).toList(),
             ),
-          ],
-        ),
       ),
     );
   }
